@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F6B5C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="メモ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>スターターメモ</title>
+<style>
+  :root {
+    --bg: #E9EEF2; --surface: #FFFFFF; --ink: #101820; --muted: #5A6772;
+    --accent: #0F6B5C; --accent-ink: #FFFFFF; --danger: #B3261E; --line: #CBD5DC;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { height: 100%; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; min-height: 100%; background: var(--bg); color: var(--ink);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.6;
+  }
+  main { max-width: 34rem; margin: 0 auto; padding: 20px 16px 32px; }
+  h1 { font-size: 1.5rem; margin: 8px 0 4px; letter-spacing: .02em; }
+  .sub { margin: 0 0 20px; color: var(--muted); font-size: .9rem; }
+  textarea {
+    width: 100%; min-height: 96px; padding: 12px; font: inherit; color: var(--ink);
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; resize: vertical;
+  }
+  textarea:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+  .count { color: var(--muted); font-size: .85rem; }
+  button.primary {
+    min-height: 48px; padding: 0 22px; border: 0; border-radius: 10px; font: inherit; font-weight: 700;
+    background: var(--accent); color: var(--accent-ink);
+  }
+  button.primary:active { filter: brightness(.9); }
+  .msg { min-height: 1.5em; margin: 8px 0 0; font-size: .9rem; color: var(--danger); }
+  ul { list-style: none; margin: 20px 0 0; padding: 0; }
+  li { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 6px; padding: 12px 12px 8px 14px; margin-bottom: 10px; }
+  li p { margin: 0 0 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  li .meta { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: .8rem; }
+  button.del { min-width: 44px; min-height: 44px; border: 0; background: none; font: inherit; color: var(--danger); font-weight: 700; }
+  .empty { color: var(--muted); text-align: center; padding: 28px 8px; border: 1.5px dashed var(--line); border-radius: 10px; }
+  .net { margin-top: 24px; font-size: .8rem; color: var(--muted); text-align: center; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>スターターメモ</h1>
+  <p class="sub">書いたメモはこの端末に保存されます。</p>
+
+  <label for="text" class="sub" style="display:block;margin:0 0 6px">メモの内容</label>
+  <textarea id="text" maxlength="500" placeholder="ここにメモを書く"></textarea>
+  <div class="row">
+    <span class="count" id="count">0 / 500</span>
+    <button class="primary" id="add" type="button">メモを保存</button>
+  </div>
+  <p class="msg" id="msg" role="alert"></p>
+
+  <ul id="list" aria-live="polite"></ul>
+  <p class="net" id="net"></p>
+</main>
+
+<script>
+(function () {
+  var KEY = "starter-memo:items";
+  var text = document.getElementById("text");
+  var count = document.getElementById("count");
+  var msg = document.getElementById("msg");
+  var list = document.getElementById("list");
+  var net = document.getElementById("net");
+  var items = [];
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      items = Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      items = [];
+      msg.textContent = "保存済みのメモを読み込めませんでした。新しく書き始められます。";
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(items));
+      return true;
+    } catch (e) {
+      msg.textContent = "この端末に保存できませんでした。ブラウザのストレージ設定を確認してください。";
+      return false;
+    }
+  }
+
+  function fmt(ts) {
+    var d = new Date(ts);
+    return (d.getMonth() + 1) + "/" + d.getDate() + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+
+  function render() {
+    list.innerHTML = "";
+    if (!items.length) {
+      var li = document.createElement("li");
+      li.className = "empty";
+      li.style.borderLeft = "";
+      li.textContent = "まだメモがありません。上の欄に書いて「メモを保存」を押してください。";
+      list.appendChild(li);
+      return;
+    }
+    items.forEach(function (it) {
+      var li = document.createElement("li");
+      var p = document.createElement("p");
+      p.textContent = it.text;
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      var t = document.createElement("span");
+      t.textContent = fmt(it.at);
+      var b = document.createElement("button");
+      b.className = "del";
+      b.type = "button";
+      b.textContent = "削除";
+      b.setAttribute("aria-label", "このメモを削除");
+      b.addEventListener("click", function () {
+        items = items.filter(function (x) { return x.id !== it.id; });
+        msg.textContent = "";
+        if (save()) render();
+      });
+      meta.appendChild(t);
+      meta.appendChild(b);
+      li.appendChild(p);
+      li.appendChild(meta);
+      list.appendChild(li);
+    });
+  }
+
+  text.addEventListener("input", function () {
+    count.textContent = text.value.length + " / 500";
+    msg.textContent = "";
+  });
+
+  document.getElementById("add").addEventListener("click", function () {
+    var v = text.value.trim();
+    if (!v) { msg.textContent = "メモの内容が空です。何か書いてから保存してください。"; return; }
+    items.unshift({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), text: v, at: Date.now() });
+    msg.textContent = "";
+    if (save()) {
+      text.value = "";
+      count.textContent = "0 / 500";
+      render();
+    } else {
+      items.shift();
+    }
+  });
+
+  function showNet() {
+    net.textContent = navigator.onLine ? "オンライン" : "オフライン(メモは使えます)";
+  }
+  window.addEventListener("online", showNet);
+  window.addEventListener("offline", showNet);
+
+  load(); render(); showNet();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+})();
+</script>
+</body>
+</html>

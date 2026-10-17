@@ -90,7 +90,7 @@ button.del { min-width: 44px; min-height: 44px; border: 0; background: none; fon
 (function () {
   var KEY = "starter-memo:items";
   // AI中継(Cloudflare Worker)のURL。空のままだとAI機能は「未設定」と表示される。キーはここに書かない。
-  var AI_ENDPOINT = "";
+  var AI_ENDPOINT = "https://memo-ai.tomatoto1977.workers.dev/";
   var AI_TIMEOUT_MS = 15000;
   var text = document.getElementById("text");
   var count = document.getElementById("count");

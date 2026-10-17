@@ -182,10 +182,16 @@ button.del { min-width: 44px; min-height: 44px; border: 0; background: none; fon
 
   // ---- AI(要約・整形)。結果は確認してから入力欄に入れる。自動では保存しない ----
   function setBusy(busy) { sumBtn.disabled = busy; polBtn.disabled = busy; }
-  function aiErrorMessage(code) {
+  function aiErrorMessage(code, data) {
     if (code === "too_long") return "メモが長すぎます(500字まで)。";
     if (code === "empty_text") return "メモの内容が空です。何か書いてから押してください。";
-    if (code === "all_failed") return "いまAIが混み合っています。しばらくしてからもう一度試してください。";
+    if (code === "all_failed") {
+      var d = "";
+      if (data && data.tried && typeof data.tried === "object") {
+        d = "(" + Object.keys(data.tried).map(function (k) { return k + ": " + data.tried[k]; }).join(", ") + ")";
+      }
+      return "いまAIが混み合っています。しばらくしてからもう一度試してください。" + d;
+    }
     return "AIの処理に失敗しました。しばらくしてからもう一度試してください。";
   }
   function runAi(mode) {
@@ -211,7 +217,7 @@ button.del { min-width: 44px; min-height: 44px; border: 0; background: none; fon
         aitext.textContent = res.data.text;
         aibox.hidden = false;
       } else {
-        msg.textContent = aiErrorMessage(res.data && res.data.error);
+        msg.textContent = aiErrorMessage(res.data && res.data.error, res.data);
       }
     }).catch(function (e) {
       msg.textContent = e && e.name === "AbortError" ? "AIの応答に時間がかかりすぎました。もう一度試してください。" : "AIに接続できませんでした。";

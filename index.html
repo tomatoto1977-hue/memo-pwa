@@ -57,6 +57,14 @@ li p { margin: 0 0 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
 li .meta { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: .8rem; }
 button.del { min-width: 44px; min-height: 44px; border: 0; background: none; font: inherit; color: var(--danger); font-weight: 700; }
 .empty { color: var(--muted); text-align: center; padding: 28px 8px; border: 1.5px dashed var(--line); border-radius: 10px; }
+details.obs { margin-top: 20px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 0 14px; }
+details.obs summary { min-height: 48px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+details.obs .field { display: block; margin: 0 0 12px; }
+details.obs .field span { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+details.obs input[type=text] { box-sizing: border-box; width: 100%; min-height: 48px; padding: 0 12px; font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; }
+details.obs label.check { display: flex; align-items: center; gap: 12px; min-height: 48px; }
+details.obs input[type=checkbox] { width: 24px; height: 24px; accent-color: var(--accent); }
+details.obs .hint { margin: 0 0 14px; font-size: .8rem; color: var(--muted); }
 .net { margin-top: 24px; font-size: .8rem; color: var(--muted); text-align: center; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -84,6 +92,13 @@ button.del { min-width: 44px; min-height: 44px; border: 0; background: none; fon
     </div>
   </div>
   <ul id="list" aria-live="polite"></ul>
+  <details class="obs" id="obsbox">
+    <summary>Obsidianに自動で送る</summary>
+    <label class="check"><input type="checkbox" id="obsOn"><span>「メモを保存」で、Obsidianにも送る</span></label>
+    <label class="field"><span>Obsidianの保管庫(Vault)の名前</span><input type="text" id="obsVault" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例: MyVault"></label>
+    <label class="field"><span>追記するノートの名前(保管庫の中)</span><input type="text" id="obsFile" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="スターターメモ"></label>
+    <p class="hint">保存すると、Obsidianが開いてノートの末尾に追記されます。メモはこの端末にも必ず保存されます。</p>
+  </details>
   <p class="net" id="net"></p>
 </main>
 <script>
@@ -169,16 +184,61 @@ button.del { min-width: 44px; min-height: 44px; border: 0; background: none; fon
   document.getElementById("add").addEventListener("click", function () {
     var v = text.value.trim();
     if (!v) { msg.textContent = "メモの内容が空です。何か書いてから保存してください。"; return; }
-    items.unshift({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), text: v, at: Date.now() });
+    var entry = { id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), text: v, at: Date.now() };
+    items.unshift(entry);
     msg.textContent = "";
     if (save()) {
       text.value = "";
       count.textContent = "0 / 500";
       render();
+      sendToObsidian(entry);
     } else {
       items.shift();
     }
   });
+
+  // ---- Obsidian連携。端末への保存が成功したあとにだけ、obsidian:// で追記を依頼する ----
+  var OBS_KEY = "starter-memo:obsidian";
+  var obsOn = document.getElementById("obsOn");
+  var obsVault = document.getElementById("obsVault");
+  var obsFile = document.getElementById("obsFile");
+  function obsLoad() {
+    try {
+      var o = JSON.parse(localStorage.getItem(OBS_KEY) || "{}") || {};
+      obsOn.checked = o.on === true;
+      obsVault.value = typeof o.vault === "string" ? o.vault : "";
+      obsFile.value = typeof o.file === "string" ? o.file : "";
+    } catch (e) { /* 読めなければ初期状態(オフ) */ }
+  }
+  function obsSave() {
+    try {
+      localStorage.setItem(OBS_KEY, JSON.stringify({ on: obsOn.checked, vault: obsVault.value.trim(), file: obsFile.value.trim() }));
+    } catch (e) { msg.textContent = "Obsidianの設定を保存できませんでした。"; }
+  }
+  [obsOn, obsVault, obsFile].forEach(function (el) { el.addEventListener("change", obsSave); el.addEventListener("input", obsSave); });
+  function pad2(n) { return String(n).padStart(2, "0"); }
+  function stamp(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
+  function buildObsidianUri(vault, file, entry) {
+    var content = "\n### " + stamp(entry.at) + "\n" + entry.text + "\n";
+    return "obsidian://new?vault=" + encodeURIComponent(vault) + "&file=" + encodeURIComponent(file) +
+      "&content=" + encodeURIComponent(content) + "&append=true";
+  }
+  function sendToObsidian(entry) {
+    if (!obsOn.checked) return;
+    var vault = obsVault.value.trim();
+    if (!vault) { msg.textContent = "メモは保存しました。Obsidianに送るには、保管庫の名前を入れてください。"; return; }
+    var file = obsFile.value.trim() || "スターターメモ";
+    var a = document.createElement("a");
+    a.href = buildObsidianUri(vault, file, entry);
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  obsLoad();
 
   // ---- AI(要約・整形)。結果は確認してから入力欄に入れる。自動では保存しない ----
   function setBusy(busy) { sumBtn.disabled = busy; polBtn.disabled = busy; }

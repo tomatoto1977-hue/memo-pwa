@@ -12,71 +12,95 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>スターターメモ</title>
 <style>
-  :root {
-    --bg: #E9EEF2; --surface: #FFFFFF; --ink: #101820; --muted: #5A6772;
-    --accent: #0F6B5C; --accent-ink: #FFFFFF; --danger: #B3261E; --line: #CBD5DC;
-    box-sizing: border-box;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  *, *::before, *::after { box-sizing: inherit; }
-  html { height: 100%; -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0; min-height: 100%; background: var(--bg); color: var(--ink);
-    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
-    font-size: 17px; line-height: 1.6;
-  }
-  main { max-width: 34rem; margin: 0 auto; padding: 20px 16px 32px; }
-  h1 { font-size: 1.5rem; margin: 8px 0 4px; letter-spacing: .02em; }
-  .sub { margin: 0 0 20px; color: var(--muted); font-size: .9rem; }
-  textarea {
-    width: 100%; min-height: 96px; padding: 12px; font: inherit; color: var(--ink);
-    background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; resize: vertical;
-  }
-  textarea:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
-  .count { color: var(--muted); font-size: .85rem; }
-  button.primary {
-    min-height: 48px; padding: 0 22px; border: 0; border-radius: 10px; font: inherit; font-weight: 700;
-    background: var(--accent); color: var(--accent-ink);
-  }
-  button.primary:active { filter: brightness(.9); }
-  .msg { min-height: 1.5em; margin: 8px 0 0; font-size: .9rem; color: var(--danger); }
-  ul { list-style: none; margin: 20px 0 0; padding: 0; }
-  li { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 6px; padding: 12px 12px 8px 14px; margin-bottom: 10px; }
-  li p { margin: 0 0 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
-  li .meta { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: .8rem; }
-  button.del { min-width: 44px; min-height: 44px; border: 0; background: none; font: inherit; color: var(--danger); font-weight: 700; }
-  .empty { color: var(--muted); text-align: center; padding: 28px 8px; border: 1.5px dashed var(--line); border-radius: 10px; }
-  .net { margin-top: 24px; font-size: .8rem; color: var(--muted); text-align: center; }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+:root {
+  --bg: #E9EEF2; --surface: #FFFFFF; --ink: #101820; --muted: #5A6772;
+  --accent: #0F6B5C; --accent-ink: #FFFFFF; --danger: #B3261E; --line: #CBD5DC;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100%; background: var(--bg); color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+  font-size: 17px; line-height: 1.6;
+}
+main { max-width: 34rem; margin: 0 auto; padding: 20px 16px 32px; }
+h1 { font-size: 1.5rem; margin: 8px 0 4px; letter-spacing: .02em; }
+.sub { margin: 0 0 20px; color: var(--muted); font-size: .9rem; }
+textarea {
+  width: 100%; min-height: 96px; padding: 12px; font: inherit; color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; resize: vertical;
+}
+textarea:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.count { color: var(--muted); font-size: .85rem; }
+button.primary {
+  min-height: 48px; padding: 0 22px; border: 0; border-radius: 10px; font: inherit; font-weight: 700;
+  background: var(--accent); color: var(--accent-ink);
+}
+button.primary:active { filter: brightness(.9); }
+button.ai {
+  min-height: 48px; padding: 0 16px; border: 1.5px solid var(--accent); border-radius: 10px; font: inherit; font-weight: 700;
+  background: var(--surface); color: var(--accent);
+}
+button.ai:disabled { opacity: .5; }
+.msg { min-height: 1.5em; margin: 8px 0 0; font-size: .9rem; color: var(--danger); }
+.aibox { margin-top: 12px; padding: 12px; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 10px; }
+.aibox[hidden] { display: none; }
+.aibox p { margin: 0 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.aibox .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+ul { list-style: none; margin: 20px 0 0; padding: 0; }
+li { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 6px; padding: 12px 12px 8px 14px; margin-bottom: 10px; }
+li p { margin: 0 0 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+li .meta { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: .8rem; }
+button.del { min-width: 44px; min-height: 44px; border: 0; background: none; font: inherit; color: var(--danger); font-weight: 700; }
+.empty { color: var(--muted); text-align: center; padding: 28px 8px; border: 1.5px dashed var(--line); border-radius: 10px; }
+.net { margin-top: 24px; font-size: .8rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
 <main>
   <h1>スターターメモ</h1>
   <p class="sub">書いたメモはこの端末に保存されます。</p>
-
   <label for="text" class="sub" style="display:block;margin:0 0 6px">メモの内容</label>
   <textarea id="text" maxlength="500" placeholder="ここにメモを書く"></textarea>
   <div class="row">
     <span class="count" id="count">0 / 500</span>
     <button class="primary" id="add" type="button">メモを保存</button>
   </div>
+  <div class="row">
+    <button class="ai" id="sum" type="button">AIで要約</button>
+    <button class="ai" id="pol" type="button">AIで整形</button>
+  </div>
   <p class="msg" id="msg" role="alert"></p>
-
+  <div class="aibox" id="aibox" hidden>
+    <p id="aitext"></p>
+    <div class="actions">
+      <button class="primary" id="aiuse" type="button">入力欄に入れる</button>
+      <button class="ai" id="aiclose" type="button">閉じる</button>
+    </div>
+  </div>
   <ul id="list" aria-live="polite"></ul>
   <p class="net" id="net"></p>
 </main>
-
 <script>
 (function () {
   var KEY = "starter-memo:items";
+  // AI中継(Cloudflare Worker)のURL。空のままだとAI機能は「未設定」と表示される。キーはここに書かない。
+  var AI_ENDPOINT = "";
+  var AI_TIMEOUT_MS = 15000;
   var text = document.getElementById("text");
   var count = document.getElementById("count");
   var msg = document.getElementById("msg");
   var list = document.getElementById("list");
   var net = document.getElementById("net");
+  var sumBtn = document.getElementById("sum");
+  var polBtn = document.getElementById("pol");
+  var aibox = document.getElementById("aibox");
+  var aitext = document.getElementById("aitext");
   var items = [];
 
   function load() {
@@ -89,7 +113,6 @@
       msg.textContent = "保存済みのメモを読み込めませんでした。新しく書き始められます。";
     }
   }
-
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify(items));
@@ -99,12 +122,10 @@
       return false;
     }
   }
-
   function fmt(ts) {
     var d = new Date(ts);
     return (d.getMonth() + 1) + "/" + d.getDate() + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
   }
-
   function render() {
     list.innerHTML = "";
     if (!items.length) {
@@ -145,7 +166,6 @@
     count.textContent = text.value.length + " / 500";
     msg.textContent = "";
   });
-
   document.getElementById("add").addEventListener("click", function () {
     var v = text.value.trim();
     if (!v) { msg.textContent = "メモの内容が空です。何か書いてから保存してください。"; return; }
@@ -160,14 +180,61 @@
     }
   });
 
+  // ---- AI(要約・整形)。結果は確認してから入力欄に入れる。自動では保存しない ----
+  function setBusy(busy) { sumBtn.disabled = busy; polBtn.disabled = busy; }
+  function aiErrorMessage(code) {
+    if (code === "too_long") return "メモが長すぎます(500字まで)。";
+    if (code === "empty_text") return "メモの内容が空です。何か書いてから押してください。";
+    if (code === "all_failed") return "いまAIが混み合っています。しばらくしてからもう一度試してください。";
+    return "AIの処理に失敗しました。しばらくしてからもう一度試してください。";
+  }
+  function runAi(mode) {
+    msg.textContent = "";
+    aibox.hidden = true;
+    var v = text.value.trim();
+    if (!v) { msg.textContent = "メモの内容が空です。何か書いてから押してください。"; return; }
+    if (!AI_ENDPOINT) { msg.textContent = "AI機能はまだ設定されていません。"; return; }
+    if (!navigator.onLine) { msg.textContent = "オフラインのためAIは使えません(メモは保存できます)。"; return; }
+    setBusy(true);
+    msg.textContent = "AIが処理中です…";
+    var ctl = new AbortController();
+    var timer = setTimeout(function () { ctl.abort(); }, AI_TIMEOUT_MS);
+    fetch(AI_ENDPOINT, {
+      method: "POST", signal: ctl.signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: mode, text: v })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) { return { ok: r.ok, data: data }; });
+    }).then(function (res) {
+      if (res.ok && res.data && typeof res.data.text === "string" && res.data.text) {
+        msg.textContent = "";
+        aitext.textContent = res.data.text;
+        aibox.hidden = false;
+      } else {
+        msg.textContent = aiErrorMessage(res.data && res.data.error);
+      }
+    }).catch(function (e) {
+      msg.textContent = e && e.name === "AbortError" ? "AIの応答に時間がかかりすぎました。もう一度試してください。" : "AIに接続できませんでした。";
+    }).then(function () {
+      clearTimeout(timer);
+      setBusy(false);
+    });
+  }
+  sumBtn.addEventListener("click", function () { runAi("summarize"); });
+  polBtn.addEventListener("click", function () { runAi("polish"); });
+  document.getElementById("aiuse").addEventListener("click", function () {
+    text.value = aitext.textContent.slice(0, 500);
+    count.textContent = text.value.length + " / 500";
+    aibox.hidden = true;
+  });
+  document.getElementById("aiclose").addEventListener("click", function () { aibox.hidden = true; });
+
   function showNet() {
     net.textContent = navigator.onLine ? "オンライン" : "オフライン(メモは使えます)";
   }
   window.addEventListener("online", showNet);
   window.addEventListener("offline", showNet);
-
   load(); render(); showNet();
-
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("sw.js").catch(function () {});
